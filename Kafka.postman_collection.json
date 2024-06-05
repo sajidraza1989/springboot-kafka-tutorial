@@ -1,0 +1,80 @@
+{
+	"info": {
+		"_postman_id": "bad881d2-7249-4397-82b4-1b58e9efb8d8",
+		"name": "Kafka",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26157738",
+		"_collection_link": "https://solar-equinox-811217.postman.co/workspace/Team-Workspace~203ca4de-63c0-4b52-83d4-936ad3e82721/collection/26157738-bad881d2-7249-4397-82b4-1b58e9efb8d8?action=share&source=collection_link&creator=26157738"
+	},
+	"item": [
+		{
+			"name": "New Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": 123,\r\n    \"firstName\" : \"Sajid\",\r\n    \"lastName\": \"Rizvi\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/api/v1/kafka/publish",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"kafka",
+						"publish"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request Copy",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/api/v1/kafka/publish?message=This is a string value - mumbai",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"kafka",
+						"publish"
+					],
+					"query": [
+						{
+							"key": "message",
+							"value": "This is a string value - mumbai"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

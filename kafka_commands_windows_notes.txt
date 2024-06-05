@@ -1,0 +1,88 @@
+STEP 1: DOWNLOAD AND INSTALL KAFKA
+https://dlcdn.apache.org/kafka/3.2.0/kafka_2.13-3.2.0.tgz
+
+STEP 2: START THE KAFKA ENVIRONMENT
+# Start the ZooKeeper service
+C:\Users\sajid\Downloads\kafka>.\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+
+# Start the Kafka broker service
+C:\Users\sajid\Downloads\kafka>.\bin\windows\kafka-server-start.bat .\config\server.properties
+
+STEP 3: CREATE A TOPIC TO STORE YOUR EVENTS
+C:\Users\sajid\Downloads\kafka>.\bin\windows\kafka-topics.bat --create --topic topic_demo --bootstrap-server localhost:9092
+
+STEP 4: WRITE SOME EVENTS INTO THE TOPIC
+C:\Users\sajid\Downloads\kafka>.\bin\windows\kafka-console-producer.bat --topic topic_demo --bootstrap-server localhost:9092
+>hello world
+>topic demo
+
+STEP 5:  READ THE EVENTS
+C:\Users\sajid\Downloads\kafka>.\bin\windows\kafka-console-consumer.bat --topic topic_demo --from-beginning --bootstrap-server localhost:9092
+hello world
+topic demo
+
+
+
+Auto Commit
+-----------
+This is the simplest way to commit offsets. Kafka, by default, uses auto-commit – at every 10 seconds it commits the largest offset returned by the poll() method.
+poll() returns a set of messages with a timeout of 10 seconds, as we can see in the code
+
+KafkaConsumer<Long, String> consumer = new KafkaConsumer<>(props);
+consumer.subscribe(KafkaConfigProperties.getTopic());
+ConsumerRecords<Long, String> messages = consumer.poll(Duration.ofSeconds(10));
+for (ConsumerRecord<Long, String> message : messages) {
+  // processed message
+}
+
+The problem with auto-commit is that there is a very high chance of data loss in case of application failure.
+When poll() returns the messages, Kafka may commit the largest offset before processing all messages.
+
+Let’s say poll() returns 100 messages, and the consumer processes 60 messages when the auto-commit happens. 
+Then, due to some failure, the consumer crashes. When a new consumer goes live to read messages, it commences reading from offset 101, 
+resulting in the loss of messages between 61 and 100.
+
+
+#Commit offset manually
+
+In manual commits, whether sync or async,  it’s necessary to disable auto-commit by setting the default property 
+enabled.auto.commit to false
+
+Properties props = new Properties();
+props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+
+Commit Sync
+-------------
+The commitSync() blocks the code until it completes.
+
+Pros:
+This method prevents data loss by committing the offset only after processing the messages.
+
+Cons:
+1. duplicate reading  (it doesn’t prevent duplicate reading when a consumer crashes before committing the offset)
+2. impacts application performance
+3. in case of an error, it keeps on retrying.
+
+
+KafkaConsumer<Long, String> consumer = new KafkaConsumer<>(props);
+consumer.subscribe(KafkaConfigProperties.getTopic());
+ConsumerRecords<Long, String> messages = consumer.poll(Duration.ofSeconds(10));
+  //process the messages
+consumer.commitSync();
+
+
+Async
+-----
+The problem with the async commit is that it doesn’t retry in case of failure. 
+It relies on the next call of commitAsync(), which will commit the latest offset.
+
+Suppose 300 is the largest offset we want to commit, but our commitAsync() fails due to some issue. 
+It could be possible that before it retries, another call of commitAsync() commits the largest offset of 400 
+as it is asynchronous. When failed commitAsync() retries and if it commits offsets 300 successfully,
+it will overwrite the previous commit of 400, resulting in duplicate reading. 
+That is why commitAsync() doesn’t retry.
+
+Commit Specific Offset
+----------------------
+Sometimes, we need to take more control over offsets. 
+Let’s say we’re processing the messages in small batches and want to commit the offsets as soon as messages are processed
